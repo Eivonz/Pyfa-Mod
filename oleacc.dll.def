@@ -1,0 +1,31 @@
+LIBRARY
+EXPORTS
+
+AccGetRunningUtilityState=FakeAccGetRunningUtilityState @3
+AccNotifyTouchInteraction=FakeAccNotifyTouchInteraction @4
+AccSetRunningUtilityState=FakeAccSetRunningUtilityState @5
+AccessibleChildren=FakeAccessibleChildren @6
+AccessibleObjectFromEvent=FakeAccessibleObjectFromEvent @7
+AccessibleObjectFromPoint=FakeAccessibleObjectFromPoint @8
+AccessibleObjectFromWindow=FakeAccessibleObjectFromWindow @9
+AccessibleObjectFromWindowTimeout=FakeAccessibleObjectFromWindowTimeout @10
+CreateStdAccessibleObject=FakeCreateStdAccessibleObject @11
+CreateStdAccessibleProxyA=FakeCreateStdAccessibleProxyA @12
+CreateStdAccessibleProxyW=FakeCreateStdAccessibleProxyW @13
+DllCanUnloadNow=FakeDllCanUnloadNow @14
+DllGetClassObject=FakeDllGetClassObject @15
+DllRegisterServer=FakeDllRegisterServer @1
+DllUnregisterServer=FakeDllUnregisterServer @2
+GetOleaccVersionInfo=FakeGetOleaccVersionInfo @16
+GetProcessHandleFromHwnd=FakeGetProcessHandleFromHwnd @17
+GetRoleTextA=FakeGetRoleTextA @18
+GetRoleTextW=FakeGetRoleTextW @19
+GetStateTextA=FakeGetStateTextA @20
+GetStateTextW=FakeGetStateTextW @21
+IID_IAccessible=FakeIID_IAccessible @22
+IID_IAccessibleHandler=FakeIID_IAccessibleHandler @23
+LIBID_Accessibility=FakeLIBID_Accessibility @24
+LresultFromObject=FakeLresultFromObject @25
+ObjectFromLresult=FakeObjectFromLresult @26
+PropMgrClient_LookupProp=FakePropMgrClient_LookupProp @27
+WindowFromAccessibleObject=FakeWindowFromAccessibleObject @28
