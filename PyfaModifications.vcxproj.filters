@@ -21,7 +21,19 @@
     <ClInclude Include="pch.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="oleacc.dll.h">
+    <ClInclude Include="dllexports.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="iathook.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="logging.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="INIReader\INIReader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="INIReader\ini.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -32,14 +44,26 @@
     <ClCompile Include="pch.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="INIReader\ini.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="INIReader\INIReader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="oleacc.dll.def">
       <Filter>Source Files</Filter>
     </None>
+    <None Include="version.dll.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="oleacc.dll.asm">
+      <Filter>Source Files</Filter>
+    </CustomBuild>
+    <CustomBuild Include="version.dll.asm">
       <Filter>Source Files</Filter>
     </CustomBuild>
   </ItemGroup>
