@@ -16,7 +16,7 @@ To install copy the file named "oleacc.dll" into the Pyfa installation directory
 To uninstall delete the file named "oleacc.dll" from the Pyfa installation directory.
 
 
-#### Windows Support
+#### Windows Support (x64)
 This should work on at least following Windows versions:
 * Windows 10
 * Windows 11
@@ -29,13 +29,40 @@ When build this solution creates a DLL, that is automatically loaded by Pyfa whe
 
 The DLL hooks a specific set of windows functions, modifying the color values.
 
+## Custom colors
+It is possible to specify custom colors in an optional .ini file ("oleacc.ini") located in same folder as the .dll file.
+```
+;
+; Pyfa mod Darkmode settings
+;
+;   Important, colors are specified by their respective RGB hex value and must be prefixed by '0x'
+;
+;   ColorBackground: Main background color for most window elements
+;   ColorText: Color of the text elements
+;   UseExperimentalDarkmode: Implementation of some undocumented windows api call, to force certain apps into a darkmode state.
+;   EnableLogging: Write log output to a .log file
+;
+[settings]
+ColorBackground = 0x686868
+ColorText = 0xBCBCBC
+UseExperimentalDarkmode = true
+EnableLogging = false
+```
 
 ### ToDo
-* User customizable colors.
 * Better support for native controls still colored in default windows colors.
-* Rework hooking mechanics.
+* ~~User customizable colors.~~
+* ~~Rework hooking mechanics.~~
+
+## Contact:
+Any issues can be submitted using the [issue](https://github.com/Eivonz/Pyfa-Mod/issues) system.
+* I can be contacted through following:
+    * EvE: Eibon Ravnsborg
+    * Email: mail@eibon.net
 
 
 ## Resources
 * [Pyfa repository](https://github.com/pyfa-org/Pyfa)
 * [Pyfa Issue thread regarding Dark/Nightmode](https://github.com/pyfa-org/Pyfa/issues/1206)
+
+
