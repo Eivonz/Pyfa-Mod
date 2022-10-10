@@ -1,6 +1,6 @@
 # Static resources
 .git/
- _imgs
+ _imgs/
  _releases/
 
 # Builds
