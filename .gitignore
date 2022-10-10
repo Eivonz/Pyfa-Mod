@@ -1,0 +1,20 @@
+# Static resources
+.git/
+ _imgs
+ _releases/
+
+# Builds
+x64/
+
+# Mixed
+*.tmp
+*.log
+*.swp
+.version
+/.version
+
+# dotenv
+.env
+
+# vscode settings
+.vscode
