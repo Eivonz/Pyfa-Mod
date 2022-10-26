@@ -7,7 +7,12 @@
 #include <ctime>
 #include <iomanip>
 
+#include <regex>
+
+#include <Windows.h>
+
 #define WDBGVAR( var ) { std::ostringstream ods_stream_; ods_stream_ << "(" << __LINE__ << ") " << #var << " = [" << (var) << "]"; ::OutputDebugStringA(ods_stream_.str().c_str()); }
+
 
 /*
 	Instantiation:
@@ -108,4 +113,29 @@ static char* ByteArrStr(BYTE* byteArr, SIZE_T sz) {
 
 	return buffer;
 }
+
 */
+
+
+std::string string_format(std::string fmt, ...) {
+	int size = 100;
+	std::string str;
+	va_list ap;
+
+	while (1) {
+		str.resize(size);
+		va_start(ap, fmt);
+		int n = vsnprintf(&str[0], size, fmt.c_str(), ap);
+		va_end(ap);
+
+		if (n > -1 && n < size) {
+			str.resize(n); // Make sure there are no trailing zero char
+			return str;
+		}
+		if (n > -1)
+			size = n + 1;
+		else
+			size *= 2;
+	}
+}
+

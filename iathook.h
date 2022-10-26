@@ -147,7 +147,11 @@ BOOL PatchIAT(HMODULE hModule, const char* lpModuleName, const char* lpProcName,
     }
 
     // Retrieve address of function for later comparison
-    PROC baseGetProcAddress = (PROC)GetProcAddress(GetModuleHandleA(lpModuleName), lpProcName);
+    //PROC baseGetProcAddress = (PROC)GetProcAddress(GetModuleHandleA(lpModuleName), lpProcName);
+    HMODULE hMod = GetModuleHandleA(lpModuleName);
+    if (hMod != NULL) { return false; }
+    FARPROC baseGetProcAddress = GetProcAddress(hModule, lpProcName);
+    if (baseGetProcAddress == NULL) { return false; }
 
     // From the lpModuleName import descriptor, go over its IAT thunks to
     // find the one used by the rest of the code to call GetProcAddress

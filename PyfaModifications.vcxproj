@@ -145,7 +145,7 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <LanguageStandard>Default</LanguageStandard>
     </ClCompile>
     <Link>
@@ -157,6 +157,8 @@
       <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>$(MSBuildProjectDirectory)\Detours\lib.X64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <ModuleDefinitionFile>oleacc.dll.def</ModuleDefinitionFile>
+      <Version>
+      </Version>
       <!--<ModuleDefinitionFile>version.dll.def</ModuleDefinitionFile>-->
     </Link>
   </ItemDefinitionGroup>
@@ -168,6 +170,7 @@
     <ClInclude Include="logging.h" />
     <ClInclude Include="dllexports.h" />
     <ClInclude Include="pch.h" />
+    <ClInclude Include="resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
@@ -191,7 +194,6 @@
     </CustomBuild>
     <None Include="oleacc.dll.def" />
   </ItemGroup>
-
   <ItemGroup>
     <CustomBuild Include="version.dll.asm">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
@@ -201,7 +203,9 @@
     </CustomBuild>
     <None Include="version.dll.def" />
   </ItemGroup>
-
+  <ItemGroup>
+    <ResourceCompile Include="Resource.rc" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
