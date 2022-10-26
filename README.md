@@ -1,5 +1,5 @@
 # Pyfa Modification (Darkmode theme)
-![Pyfa Modifications (Darkmode theme)](./_img/pyfa_mod01.png)
+![Pyfa Modifications (Darkmode theme)](./_img/pyfa_mod_01_BlackBeauty.png)
 
 ## What is it
 This is a runtime modification to the amazing [**Py**thon **F**itting **A**ssistant](https://github.com/pyfa-org/Pyfa) that implements a pseudo darkmode theme for the Pyfa windows build.
@@ -11,7 +11,7 @@ Looking at the [Pyfa Issue thread regarding Dark/Nightmode](https://github.com/p
 ## Installation & Uninstallation
 Download [latest release](https://github.com/Eivonz/Pyfa-Mod/releases/latest)
 
-To install copy the file named "oleacc.dll" into the Pyfa installation directory.
+To install copy the files named "oleacc.dll" and "oleacc.ini" into the Pyfa installation directory.
 
 To uninstall delete the file named "oleacc.dll" from the Pyfa installation directory.
 
@@ -29,30 +29,79 @@ When build this solution creates a DLL, that is automatically loaded by Pyfa whe
 
 The DLL hooks a specific set of windows functions, modifying the color values.
 
-## Custom colors
-It is possible to specify custom colors in an optional .ini file ("oleacc.ini") located in same folder as the .dll file.
+
+## Available Themes
+From version v1.0.0 it is possible to select one of multiple color themes. To change theme add or update the entry **"ActiveThemePalette"** in the [Configuration file](#configuration-file).
+
+#### Included themes:
+<table>
+  <tr>
+    <td>
+      <img src="https://github.com/Eivonz/Pyfa-Mod/raw/main/_img/pyfa_mod_01_BlackBeauty.png" width="250" height="auto">
+    </td>
+    <td>
+      <img src="https://github.com/Eivonz/Pyfa-Mod/raw/main/_img/pyfa_mod_02_Licorice.png" width="250" height="auto">
+    </td>
+    <td>
+      <img src="https://github.com/Eivonz/Pyfa-Mod/raw/main/_img/pyfa_mod_03_LicoriceBlue.png" width="250" height="auto">
+    </td>
+    <td>
+      <img src="https://github.com/Eivonz/Pyfa-Mod/raw/main/_img/pyfa_mod_04_Daintree.png" width="250" height="auto">
+    </td>
+  </tr>
+  <tr>
+    <td align="center">BlackBeauty (1) <br/> Default</td>
+    <td align="center">Licorice (2)</td>
+    <td align="center">LicoriceBlue (3)</td>
+    <td align="center">Daintree (4)</td>
+  </tr>
+</table>
+
+#### Custom theme
+It is possible to specify your own color theme using the **"OverrideThemePalette"** entry in the [Configuration file](#configuration-file).
+
+
+
+### Configuration file
+The optional file **"oleacc.ini"** contains custom settings, and can be freely edited.
+
+For any changes to take effect, Pyfa must be restart.
+
 ```
 ;
 ; Pyfa mod Darkmode settings
 ;
-;   Important, colors are specified by their respective RGB hex value and must be prefixed by '0x'
+;   ActiveThemePalette [OPTIONAL, Boolean, Default=1]
+;	Indicate which of the available color themes to use. (ex. "ActiveThemePalette = 3" to use the LicoriceBlue color theme)
+;	Available color themes: 1 = BlackBeauty, 2 = Licorice, 3 = LicoriceBlue, 4 = BlackBeauty
 ;
-;   ColorBackground: Main background color for most window elements
-;   ColorText: Color of the text elements
-;   UseExperimentalDarkmode: Implementation of some undocumented windows api call, to force certain apps into a darkmode state.
-;   EnableLogging: Write log output to a .log file
+;   OverrideThemePalette [OPTIONAL, Comma separated string]
+;	Specify a string of (5) comma separated RGB hex colors to use as theme palette, ordered from darkest to lightest.
+;	Valid RGB hex format prefix are #, 0x or nothing.
+;	(ex. OverrideThemePalette = #521ecc, #e68ca1, #1a2070, #a85294, #aaccb5)
 ;
+;   EnableCustomControls[OPTIONAL, Boolean, Default = true]
+;	Indicates if the standard windows controls will be colored by the active theme palette.
+;
+;   UseExperimentalDarkmode [OPTIONAL, Boolean, Default = true]
+;	Implementation of some undocumented windows api call, to force certain apps into a darkmode state.
+;
+;   EnableLogging [OPTIONAL, Boolean, Default = false]
+;	Write log output to a .log file.
+;
+
 [settings]
-ColorBackground = 0x686868
-ColorText = 0xBCBCBC
+ActiveThemePalette = 1
+;OverrideThemePalette = #521ecc, #e68ca1, #1a2070, #a85294, #aaccb5
+EnableCustomControls = true
 UseExperimentalDarkmode = true
 EnableLogging = false
 ```
 
-### ToDo
-* Better support for native controls still colored in default windows colors.
-* ~~User customizable colors.~~
-* ~~Rework hooking mechanics.~~
+
+
+
+
 
 ## Contact:
 Any issues can be submitted using the [issue](https://github.com/Eivonz/Pyfa-Mod/issues) system.
