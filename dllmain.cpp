@@ -9,6 +9,7 @@
 #pragma comment(lib, "Detours/lib.X64/detours.lib")
 #include "Detours/include/detours.h"
 
+
 #define DLL_OLEACC
 
 #define WSC_STATIC 1
@@ -16,9 +17,9 @@
 #define WSC_LISTVIEW_HEADER 3
 #define WSC_PANEL 4
 #define WSC_DIALOG 5
+#define WSC_LISTVIEW_SPECIAL 6
+#define WSC_CHECKBOX 7
 #define WSC_DBG 99
-
-#define WM_NOTEPADMESSAGE WM_USER + 10
 
 // Reverse endianess and shift right 1 byte to match format of COLORREF by RGB(r,g,b)
 #define SHRB(X) ((X & 0xffffffff) >> 8)
@@ -42,7 +43,10 @@
 //HWND hWndNotepad = nullptr;
 HMODULE hModuleDLL = NULL;  // Set when DLL is loaded
 HWND hWndMain = NULL;       // Set from CreateWindowEx hook
-HWND hAdditionsWindow = NULL;   // The splitter window parent to additions
+
+HWND hAdditionsWindow = NULL;                    // The splitter window parent to additions
+HWND hWnd_ActiveFitting_SysListView32 = NULL;
+HWND hWnd_ColorFitBySlot_CheckBox = NULL;
 
 //BOOL MessageHookInstalled = false;
 BOOL SubclassInstalled = false;
@@ -54,7 +58,9 @@ HHOOK hGetMsgHook;
 
 /* ------------------------------------------------------ Declarations ------------------------------------------------------------ */
 
+LRESULT CALLBACK SubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 void UpdateWndCtrls(HWND hWnd);
+
 LRESULT CALLBACK SubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData);
 LRESULT WindowProc_Static(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 LRESULT WindowProc_ListView(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
@@ -68,24 +74,6 @@ extern "C" __declspec(dllexport) BOOL CALLBACK SetHook(HWND hWND, BOOL bInstall)
 /* ------------------------------------------------------ Definitions ------------------------------------------------------------ */
 
 
-// "Theme" colors
-const DWORD clDbgR = RGB(0xFF, 0x0, 0x0);
-const DWORD clDbgG = RGB(0x0, 0xFF, 0x0);
-const DWORD clDbgB = RGB(0x00, 0x0, 0xFF);
-const DWORD clTxt1 = 0xBCBCBC;
-const DWORD clBg1 = 0x686868;
-const DWORD clBg2 = 0x3e3e42;
-const DWORD clBg3 = 0x2d2d30;
-const DWORD clBg4 = 0x252526;
-const DWORD clBg5 = 0x1e1e1e;
-HBRUSH clBDbgR = CreateSolidBrush(clDbgR);
-HBRUSH clBDbgG = CreateSolidBrush(clDbgG);
-HBRUSH clBDbgB = CreateSolidBrush(clDbgB);
-HBRUSH clBBg1 = CreateSolidBrush(clBg1);
-HBRUSH clBBg2 = CreateSolidBrush(clBg2);
-HBRUSH clBBg3 = CreateSolidBrush(clBg3);
-
-//template <class T>
 class ThemePalette {
 public:
     COLORREF dark = NULL;
@@ -103,6 +91,10 @@ public:
     HBRUSH midLight_brush = NULL;
     HBRUSH light_brush = NULL;
 
+    COLORREF ColorFitBySlot_clHIGHSLOT = RGB(235, 204, 209);
+    COLORREF ColorFitBySlot_clMEDSLOT = RGB(188, 215, 241);
+    COLORREF ColorFitBySlot_clLOWSLOT = RGB(250, 235, 204);
+
     ThemePalette(DWORD(&colors)[5]) {
         int size = wsizeof(colors);
         if (size == 5) {
@@ -117,6 +109,7 @@ public:
             this->mid_brush = CreateSolidBrush(this->mid);
             this->midLight_brush = CreateSolidBrush(this->midLight);
             this->light_brush = CreateSolidBrush(this->light);
+
         }
     }
 };
@@ -143,7 +136,9 @@ struct configuration_s {
     const wchar_t* _wndTitleStrPartial = L"Python Fitting Assistant";
     #define _WNDTITLEMODIFIED L" [Darkmode v" STR(VERSION_MAJOR) "." STR(VERSION_MINOR) "." STR(VERSION_MAJOR_UPDATE) "]"
     const wchar_t* _wndTitleModified = _WNDTITLEMODIFIED;
+
     bool _windowMainWindowFixed = false;
+    bool _ColorFitBySlotEnabled = false;
 };
 
 configuration_s Configuration;
@@ -176,19 +171,19 @@ Prototype_GetSysColor org_GetSysColor = GetSysColor;
 
 int _GetSysColor(int nIndex) {
     switch (nIndex) {
-        case 4:                         // Main window frame background or outline
+        case 4:
             return Configuration.Palette->dark;
-        case 5:                         // Window background. The associated foreground colors are COLOR_WINDOWTEXT and COLOR_HOTLITE. 
+        case 5:
             return Configuration.Palette->dark;
-        case 15:                        // Face color for three-dimensional display elements and for dialog box backgrounds. The associated foreground color is COLOR_BTNTEXT. Windows 10 or greater: This value is not supported.
+        case 15:
             return Configuration.Palette->midDark;
-        case 8:                         // Fitting & fit text color
+        case 8:
             return Configuration.Palette->white;
-        case 18:                        // Right side text color?
+        case 18:
             return Configuration.Palette->white;
-        case 13:                        // Fitting selected element background color
+        case 13:
             return org_GetSysColor(nIndex);
-        case 14:                        // Fitting & fit selected item text color
+        case 14:
             return org_GetSysColor(nIndex);
     }
     return org_GetSysColor(nIndex);
@@ -240,12 +235,12 @@ HWND _CreateWindowExW(DWORD dwExStyle, LPCWSTR lpClassName, LPCWSTR lpWindowName
             }
 
             Configuration._windowMainWindowFixed = true;
+
         }
     }
 
     // Modify specific controls, 
     if (Configuration.EnableCustomControls && hWndParent != NULL) {
-        // Check and update controls of current hwnd
         UpdateWndCtrls(hWND);
     }
 
@@ -302,6 +297,7 @@ void LoadConfiguration() {
             }
         }
         catch (std::exception e) {
+            //catch (const std::regex_error& e) {
             Log() << "Exception in OverrideThemePalette:";
             Log() << e.what();
         }
@@ -310,7 +306,6 @@ void LoadConfiguration() {
         switch (reader.GetInteger("settings", "ActiveThemePalette", 0)) {
             case 1: // Palette_BlackBeauty
                 // Default, and already instantiated
-                //Configuration.Palette = new ThemePalette(Palette_BlackBeauty);
                 Log() << " - ActiveThemePalette: BlackBeauty";
                 break;
             case 2: // Palette_Licorice
@@ -328,13 +323,11 @@ void LoadConfiguration() {
 
             default:
                 // Default, and already instantiated
-                //Configuration.Palette = new ThemePalette(Palette_BlackBeauty);
                 Log() << " - ActiveThemePalette: BlackBeauty";
         }
     }
     else if (!CustomThemeActive) {
         // Default, and already instantiated
-        //Configuration.Palette = new ThemePalette(Palette_BlackBeauty);
         Log() << " - ActiveThemePalette: BlackBeauty";
     }
 
@@ -353,6 +346,7 @@ bool onAttach(HMODULE hModule) {
         DetourAttach(&(PVOID&)org_CreateWindowExW, _CreateWindowExW);
     }
     DetourAttach(&(PVOID&)org_GetSysColor, _GetSysColor);
+
     DetourTransactionCommit();
 
     return true;
@@ -366,6 +360,7 @@ void onDetach() {
         DetourDetach(&(PVOID&)org_CreateWindowExW, _CreateWindowExW);
     }
     DetourDetach(&(PVOID&)org_GetSysColor, _GetSysColor);
+
     DetourTransactionCommit();
 
     if (SubclassInstalled) {
@@ -414,6 +409,12 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
 
 
 
+int GetWindowZIndex(HWND hWnd) {
+    int z = 0;
+    for (HWND h = hWnd; h != NULL; h = GetWindow(h, GW_HWNDPREV)) z++;
+    return z;
+}
+
 bool NotChildOfWindow(HWND hWnd, const wchar_t* className, const wchar_t* windowTitle) {
     WCHAR winClassName[MAX_PATH * 2 + 1] = { 0 };
     WCHAR winTitle[MAX_PATH * 2 + 1] = { 0 };
@@ -460,6 +461,42 @@ bool WithinWindowDepth(HWND hTopWnd, HWND hWnd, UINT maxDepth) {
 }
 
 
+LRESULT WindowProc_DBG(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
+    switch (uMsg) {
+    case WM_DESTROY:
+    case WM_NCDESTROY:
+    {
+        // Remove own subclass when contrl is destroyed
+        if (RemoveWindowSubclass(hWnd, SubclassProc, WSC_DBG)) {
+            //Log() << string_format("RemoveWindowsSubclass uninstalled: 0x%08X", hWnd);
+        }
+    } break;
+    }
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+LRESULT WindowProc_CheckBox(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+    switch (uMsg) {
+    // Update based on the "visual" state....
+    case BM_SETSTATE:
+    {
+        //Log() << "Setstate triggered: " << wParam;
+        Configuration._ColorFitBySlotEnabled = !(BOOL)wParam;
+    } break;
+    case WM_DESTROY:
+    case WM_NCDESTROY:
+    {
+        // Remove own subclass when contrl is destroyed
+        if (RemoveWindowSubclass(hWnd, SubclassProc, WSC_CHECKBOX)) {
+            //Log() << string_format("RemoveWindowsSubclass uninstalled: 0x%08X", hWnd);
+        }
+    } break;
+    }
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+
 LRESULT WindowProc_Dialog(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     switch (uMsg) {
         case WM_CTLCOLOREDIT:
@@ -470,6 +507,7 @@ LRESULT WindowProc_Dialog(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         } break;
         case WM_CTLCOLORDLG:
         {
+
             HDC hdc = (HDC)wParam;
             SetTextColor(hdc, Configuration.Palette->white);
             SetBkColor(hdc, Configuration.Palette->midDark);
@@ -514,6 +552,7 @@ LRESULT WindowProc_Panel(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             SetBkColor(hdc, Configuration.Palette->light);
             return (INT_PTR)Configuration.Palette->light_brush;
         } break;
+        // https://learn.microsoft.com/en-us/windows/win32/gdi/drawing-a-custom-window-background
         case WM_ERASEBKGND:
         {
             RECT rc;
@@ -527,6 +566,65 @@ LRESULT WindowProc_Panel(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
         {
             // Remove own subclass when contrl is destroyed
             if (RemoveWindowSubclass(hWnd, SubclassProc, WSC_PANEL)) {
+                //Log() << string_format("RemoveWindowsSubclass uninstalled: 0x%08X", hWnd);
+            }
+        } break;
+    }
+    return DefSubclassProc(hWnd, uMsg, wParam, lParam);
+}
+
+
+LRESULT WindowProc_ListViewSpecial(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
+
+    switch (uMsg) {
+        case WM_NOTIFY:
+        {
+            switch (((LPNMHDR)lParam)->code) {
+
+            case NM_CUSTOMDRAW:
+            {
+                HWND hWndDlg = ((LPNMHDR)lParam)->hwndFrom;
+                int DlgCtrlID = GetDlgCtrlID(hWndDlg);
+                if (hWndDlg == hWnd_ActiveFitting_SysListView32 && DlgCtrlID != 0) {
+
+                    LPNMLVCUSTOMDRAW lplvcd = (LPNMLVCUSTOMDRAW)lParam;
+
+                    switch (lplvcd->nmcd.dwDrawStage) {
+
+                        case CDDS_PREPAINT:
+                            return CDRF_NOTIFYITEMDRAW;
+
+                        case CDDS_ITEMPREPAINT:
+                            return CDRF_NOTIFYSUBITEMDRAW;
+
+                        case (CDDS_SUBITEM | CDDS_ITEMPREPAINT):
+                        {
+
+                            int ItmCount = ListView_GetItemCount(hWndDlg);
+                            if (ItmCount > 0
+                                && (
+                                    lplvcd->clrTextBk == Configuration.Palette->ColorFitBySlot_clHIGHSLOT
+                                    || lplvcd->clrTextBk == Configuration.Palette->ColorFitBySlot_clMEDSLOT
+                                    || lplvcd->clrTextBk == Configuration.Palette->ColorFitBySlot_clLOWSLOT
+                                )
+                            ) {
+
+                                lplvcd->clrText = Configuration.Palette->black;
+                                return CDRF_NEWFONT;
+                            }
+                        } break;
+
+                    }
+
+                }
+            } break;
+            }
+        } break;
+        case WM_DESTROY:
+        case WM_NCDESTROY:
+        {
+            // Remove own subclass when contrl is destroyed
+            if (RemoveWindowSubclass(hWnd, SubclassProc, WSC_LISTVIEW_SPECIAL)) {
                 //Log() << string_format("RemoveWindowsSubclass uninstalled: 0x%08X", hWnd);
             }
         } break;
@@ -555,7 +653,7 @@ LRESULT WindowProc_ListView(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) 
 
 LRESULT WindowProc_Static(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     
-    // TODO: Much better modal dialog handling!
+    
     if (!NotChildOfWindow(hWnd, L"#32770", NULL)) {
         switch (uMsg) {
             case WM_CTLCOLOREDIT:
@@ -567,6 +665,11 @@ LRESULT WindowProc_Static(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
     }
 
     switch (uMsg) {
+        case WM_CTLCOLORDLG:
+        {
+
+        } break;
+
         case WM_CTLCOLOREDIT:
         {
             HWND hwndCtrl = (HWND)lParam;
@@ -574,11 +677,11 @@ LRESULT WindowProc_Static(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             HDC hdc = (HDC)wParam;
             SetTextColor(hdc, Configuration.Palette->white);
 
-            //SetBkMode(hdc, OPAQUE);                                        // When has focus, TRANSPARENT ignores the bk color
             SetBkColor(hdc, Configuration.Palette->mid);                     // When has focus
             SetDCBrushColor(hdc, Configuration.Palette->mid);                // "normal" background color
             return (LRESULT)GetStockObject(DC_BRUSH);
         } break;
+
         case WM_CTLCOLORSTATIC:
         {
             HWND hwndCtrl = (HWND)lParam;
@@ -586,6 +689,7 @@ LRESULT WindowProc_Static(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam) {
             HDC hdc = (HDC)wParam;
             SetTextColor(hdc, Configuration.Palette->white);
             SetBkMode(hdc, TRANSPARENT);
+
             return (INT_PTR)Configuration.Palette->dark_brush;
         } break;
         case WM_DESTROY:
@@ -614,17 +718,25 @@ LRESULT CALLBACK SubclassProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam
         case WSC_LISTVIEW_HEADER:
             return WindowProc_ListView(hWnd, uMsg, wParam, lParam);
             break;
+        case WSC_LISTVIEW_SPECIAL:
+            return WindowProc_ListViewSpecial(hWnd, uMsg, wParam, lParam);
+            break;
         case WSC_PANEL:
             return WindowProc_Panel(hWnd, uMsg, wParam, lParam);
             break;
         case WSC_DIALOG:
             return WindowProc_Dialog(hWnd, uMsg, wParam, lParam);
             break;
+        case WSC_CHECKBOX:
+            return WindowProc_CheckBox(hWnd, uMsg, wParam, lParam);
+            break;
+        case WSC_DBG:
+            return WindowProc_DBG(hWnd, uMsg, wParam, lParam);
+            break;
     }
      
     return DefSubclassProc(hWnd, uMsg, wParam, lParam);
 }
-
 
 void UpdateWndCtrls(HWND hWnd) {
 
@@ -634,8 +746,31 @@ void UpdateWndCtrls(HWND hWnd) {
     if (GetClassName(hWnd, winClassName, MAX_PATH) > 0) {
         GetWindowText(hWnd, winTitle, MAX_PATH);
 
-        // "SysListView32"
         if (wcscmp(winClassName, L"SysListView32") == 0) {
+
+            HWND hParent = GetParent(hWnd);
+            HWND hParent2 = GetParent(hParent);
+            HWND hParent3 = GetParent(hParent2);
+
+            if ((GetWindowText(hParent, winTitle, MAX_PATH) > 0) && (wcscmp(winTitle, L"panel") == 0)) {
+                if ((GetWindowText(hParent2, winTitle, MAX_PATH) > 0) && (wcscmp(winTitle, L"splitterWindow") == 0)) {
+                    if ((GetWindowText(hParent3, winTitle, MAX_PATH) > 0) && (wcscmp(winTitle, L"splitterWindow") == 0)) {
+                        if (NotChildOfWindow(hWnd, L"#32770", NULL)) {
+
+                            hWnd_ActiveFitting_SysListView32 = hWnd;
+
+                            if (!GetWindowSubclass(hParent, SubclassProc, WSC_LISTVIEW_SPECIAL, 0)) {
+                                if (SetWindowSubclass(hParent, SubclassProc, WSC_LISTVIEW_SPECIAL, 0)) {
+                                    //Log() << string_format("SetWindowsSubclass in LV_VIEW_DETAILS installed: 0x%08X", hParent);
+                                }
+                            }
+
+
+                        }
+
+                    }
+                }
+            }
 
         }
         // "SysHeader32"
@@ -654,6 +789,7 @@ void UpdateWndCtrls(HWND hWnd) {
                     //Log() << string_format("SetWindowsSubclass in LV_VIEW_DETAILS installed: 0x%08X", hParent);
                 }
             }
+
         }
         // "SysTreeView32"
         else if (wcscmp(winClassName, L"SysTreeView32") == 0) {
@@ -687,6 +823,30 @@ void UpdateWndCtrls(HWND hWnd) {
                 }
             }
             else
+            if ((dwStyle & BS_TYPEMASK) == BS_CHECKBOX) {
+
+                // Color fitting by view checkbox
+                if (!NotChildOfWindow(hWnd, L"#32770", NULL)) {
+                    HWND hParent = GetParent(hWnd);
+                    if ((GetWindowText(hParent, winTitle, MAX_PATH) > 0) && (wcscmp(winTitle, L"panel") == 0)) {
+                        HWND hPrevWin = GetWindow(hParent, GW_HWNDPREV);
+                        if ((GetClassName(hPrevWin, winClassName, MAX_PATH) > 0) && (wcscmp(winClassName, L"SysListView32") == 0)) {
+                            if (GetWindowZIndex(hWnd) == 14) {
+
+                                hWnd_ColorFitBySlot_CheckBox = hWnd;
+                                if (!GetWindowSubclass(hWnd, SubclassProc, WSC_CHECKBOX, 0)) {
+                                    if (SetWindowSubclass(hWnd, SubclassProc, WSC_CHECKBOX, 0)) {
+                                        //Log() << string_format("SetWindowsSubclass in BS_CHECKNOX (ColorByFittingBySlot) installed: 0x%08X", hWnd);
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+
+            }
+            else
             if ((dwStyle & BS_TYPEMASK) == BS_AUTOCHECKBOX) {
 
             }
@@ -696,11 +856,12 @@ void UpdateWndCtrls(HWND hWnd) {
             }
             else
             {
+
             }
         }
         // "Edit"
         else if (wcscmp(winClassName, L"Edit") == 0) {
-
+            
                 SetWindowTheme(hWnd, L"", L"");
 
                 HWND hParent = GetParent(hWnd);
@@ -711,6 +872,7 @@ void UpdateWndCtrls(HWND hWnd) {
                         //Log() << string_format("SetWindowsSubclass in BS_RADIOBUTTON installed: 0x%08X", hWnd);
                     }
                 }
+
         }
         // "ComboBox"
         else if (wcscmp(winClassName, L"ComboBox") == 0) {
@@ -758,7 +920,6 @@ void UpdateWndCtrls(HWND hWnd) {
                 DWORD dwStyleExt = GetWindowLong(hWnd, GWL_EXSTYLE);
                 
                 if (dwStyleExt != WS_EX_CONTROLPARENT && WithinWindowDepth(hWndMain, hWnd, 3)) {
-                    //Log() << string_format("Within depth check hWind: 0x%08X", hWnd);
 
                     // Remove theme
                     SetWindowTheme(hWnd, L"", L"");
@@ -766,6 +927,7 @@ void UpdateWndCtrls(HWND hWnd) {
                     DWORD org_style = GetWindowLong(hWnd, GWL_STYLE);
                     SetWindowLong(hWnd, GWL_STYLE, org_style | WS_BORDER);
                 }
+
             }
             // splitterWindow
             else if ((wcscmp(winClassName, L"wxWindowNR") == 0) && (wcscmp(winTitle, L"splitterWindow") == 0)) {

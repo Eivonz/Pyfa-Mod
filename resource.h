@@ -1,9 +1,4 @@
-//{{NO_DEPENDENCIES}}
-// Microsoft Visual C++ generated include file.
-// Used by Resource.rc
 
-// Next default values for new objects
-// 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        101
@@ -14,13 +9,12 @@
 #endif
 
 
-
 #define STR_HELPER(x) #x
 #define STR(x) STR_HELPER(x)
 
 #define VERSION_MAJOR 1
 #define VERSION_MINOR 0
-#define VERSION_MAJOR_UPDATE 0
+#define VERSION_MAJOR_UPDATE 1
 #define VERSION_MINOR_UPDATE 0
 
 #define VERSION_SHORT MAJOR_VER.MINOR_VER
