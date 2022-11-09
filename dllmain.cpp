@@ -91,10 +91,6 @@ public:
     HBRUSH midLight_brush = NULL;
     HBRUSH light_brush = NULL;
 
-    COLORREF ColorFitBySlot_clHIGHSLOT = RGB(235, 204, 209);
-    COLORREF ColorFitBySlot_clMEDSLOT = RGB(188, 215, 241);
-    COLORREF ColorFitBySlot_clLOWSLOT = RGB(250, 235, 204);
-
     ThemePalette(DWORD(&colors)[5]) {
         int size = wsizeof(colors);
         if (size == 5) {
@@ -407,6 +403,19 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD  ul_reason_for_call, LPVOID lpReser
     return TRUE;
 }
 
+// Calculate best contrasting Black or White based on specified dominant background color
+COLORREF GetContrastColorBW(COLORREF color) {
+    int R = GetRValue(color);
+    int G = GetGValue(color);
+    int B = GetBValue(color);
+
+    double luminance = (0.299 * R + 0.587 * G + 0.114 * B) / 255;
+
+    return (luminance > 0.5 ? Configuration.Palette->black : Configuration.Palette->white);
+}
+COLORREF GetContrastColorBW(int R, int G, int B) {
+    return GetContrastColorBW(RGB(R, G, B));
+}
 
 
 int GetWindowZIndex(HWND hWnd) {
@@ -599,16 +608,10 @@ LRESULT WindowProc_ListViewSpecial(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM l
 
                         case (CDDS_SUBITEM | CDDS_ITEMPREPAINT):
                         {
-
-                            int ItmCount = ListView_GetItemCount(hWndDlg);
-                            if (ItmCount > 0
-                                && (
-                                    lplvcd->clrTextBk == Configuration.Palette->ColorFitBySlot_clHIGHSLOT
-                                    || lplvcd->clrTextBk == Configuration.Palette->ColorFitBySlot_clMEDSLOT
-                                    || lplvcd->clrTextBk == Configuration.Palette->ColorFitBySlot_clLOWSLOT
-                                )
-                            ) {
-
+                            // Assume default font color is white, and only change it to black based on background contrasting color
+                            // Reason for only updating font color to black, is to allow "other" non-controlled subclasses to do their drawing without consuming a specific notification msg
+                            //  - Example: "Color fitting view by slot" draws different row background colors, that we cant directly control
+                            if (ListView_GetItemCount(hWndDlg) > 0 && GetContrastColorBW(lplvcd->clrTextBk) == Configuration.Palette->black) {
                                 lplvcd->clrText = Configuration.Palette->black;
                                 return CDRF_NEWFONT;
                             }
