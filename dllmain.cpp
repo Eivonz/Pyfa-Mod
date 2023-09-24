@@ -172,6 +172,7 @@ int _GetSysColor(int nIndex) {
         case 5:
             return Configuration.Palette->dark;
         case 15:
+        case 22: //alternating lines in compare list
             return Configuration.Palette->midDark;
         case 8:
             return Configuration.Palette->white;
