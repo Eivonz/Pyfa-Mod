@@ -5,11 +5,11 @@
 This is a runtime modification to the amazing [**Py**thon **F**itting **A**ssistant](https://github.com/pyfa-org/Pyfa) that implements a pseudo darkmode theme for the Pyfa windows build.
 For someone using Pyfa often, the default windows theme colors can be quite strenuous for the eyes. 
 
-Looking at the [Pyfa Issue thread regarding Dark/Nightmode](https://github.com/pyfa-org/Pyfa/issues/1206) a prober solution has never been fully released, so I decided to sit down and make a quick-n-dirty work around to this.
+Looking at the [Pyfa Issue thread regarding Dark/Nightmode](https://github.com/pyfa-org/Pyfa/issues/1206) a prober solution has never been fully released, so I decided to sit down and make a ~~quick~~-n-dirty work around to this.
 
 
 ## Installation & Uninstallation
-Download [latest release](https://github.com/Eivonz/Pyfa-Mod/releases/latest)
+Download the .zip file named "release_###.zip" from [latest release](https://github.com/Eivonz/Pyfa-Mod/releases/latest)
 
 To install copy the files named "oleacc.dll" and "oleacc.ini" into the Pyfa installation directory.
 
@@ -61,11 +61,13 @@ From version v1.0.0 it is possible to select one of multiple color themes. To ch
 It is possible to specify your own color theme using the **"OverrideThemePalette"** entry in the [Configuration file](#configuration-file).
 
 
+<details>
+  <summary> Deprecated </summary>
 
 ### Configuration file
 The optional file **"oleacc.ini"** contains custom settings, and can be freely edited.
 
-For any changes to take effect, Pyfa must be restart.
+For any changes to take effect, Pyfa must be restarted.
 
 ```
 ;
@@ -98,7 +100,7 @@ UseExperimentalDarkmode = true
 EnableLogging = false
 ```
 
-
+</details>
 
 
 

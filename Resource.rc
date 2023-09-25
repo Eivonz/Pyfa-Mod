@@ -53,7 +53,7 @@ END
 VS_VERSION_INFO VERSIONINFO
  FILEVERSION VERSIONRC_FILEVERSION
  PRODUCTVERSION VERSIONRC_PRODUCTVERSION
- FILEFLAGSMASK VERSIONRC_FILEFLAGSMASK
+ FILEFLAGSMASK 0x3fL
 #ifdef _DEBUG
  FILEFLAGS 0x1L
 #else
@@ -81,6 +81,59 @@ BEGIN
     BEGIN
         VALUE "Translation", 0x400, 1200
     END
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_DIALOG_SETTINGS, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 303
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 193
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Dialog
+//
+
+IDD_DIALOG_SETTINGS DIALOGEX 0, 0, 310, 200
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | DS_CENTER | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Settings [Darkmode]"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "Save",IDOK,96,171,50,14
+    PUSHBUTTON      "Cancel",IDCANCEL,166,171,50,14
+    GROUPBOX        "Select active theme palette",IDC_STATIC,14,14,280,117
+    CONTROL         "EnableCustomControls",IDC_CHECK_ENABLECUSTOMCONTROLS,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,196,136,89,10
+    CONTROL         "UseExperimentalDarkmode",IDC_CHECK_USEEXPERIMENTALDARKMODE,
+                    "Button",BS_AUTOCHECKBOX | WS_TABSTOP,196,150,103,10
+    LISTBOX         IDC_LIST1,19,23,269,95,LBS_OWNERDRAWVARIABLE | LBS_NOINTEGRALHEIGHT | LBS_DISABLENOSCROLL | WS_VSCROLL | WS_TABSTOP,WS_EX_TRANSPARENT
+    LTEXT           "NOTE:\r Any changes made to settings in this dialog, requires a restart of PyFa to take effect.",IDC_STATIC,18,139,163,26
+    CTEXT           "* Custom colors can be set by double clicking on the color square.",IDC_STATIC,18,119,270,8,WS_DISABLED
+END
+
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// AFX_DIALOG_LAYOUT
+//
+
+IDD_DIALOG_SETTINGS AFX_DIALOG_LAYOUT
+BEGIN
+    0
 END
 
 #endif    // English (United States) resources
