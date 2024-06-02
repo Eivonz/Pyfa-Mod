@@ -109,7 +109,6 @@ EnableLogging = false
 Any issues can be submitted using the [issue](https://github.com/Eivonz/Pyfa-Mod/issues) system.
 * I can be contacted through following:
     * EvE: Eibon Ravnsborg
-    * Email: mail@eibon.net
 
 
 ## Resources
